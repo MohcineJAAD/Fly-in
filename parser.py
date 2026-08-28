@@ -80,8 +80,10 @@ class Parser:
         self.zones[name] = zone
         if prefix.strip() == "start_hub":
             self.start_zone = zone
+            zone.max_drones = self.nb_drones
         elif prefix.strip() == "end_hub":
             self.end_zone = zone
+            zone.max_drones = self.nb_drones
 
     def parse_connection_line(self, line: str) -> None:
         """Parse a connection line from the map file.
@@ -133,6 +135,7 @@ class Parser:
         for i in range(1, self.nb_drones + 1):
             drone = Drone(i, self.start_zone)
             self.drones.append(drone)
+        self.start_zone.current_drones = self.nb_drones
 
     def parse(self) -> None:
         """Parse the map file and build zones, connections, and drones.
