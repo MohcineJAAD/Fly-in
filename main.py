@@ -16,8 +16,15 @@ def main() -> None:
         end_zone=parser.end_zone
     )
     pathfinder = Pathfinder(parser.zones, parser.connections)
-    path = pathfinder.find_path(parser.start_zone, parser.end_zone)
-    paths = {drone: path for drone in parser.drones}
+    paths_found = pathfinder.find_possible_paths(
+        parser.start_zone,
+        parser.end_zone,
+        len(parser.drones)
+    )
+    paths = {}
+    for drone in parser.drones:
+        index = drone.drone_id % len(paths_found)
+        paths[drone] = paths_found[index]
     while not simulation.is_finished():
         simulation.run_turn(paths)
     for line in simulation.turn_log:
