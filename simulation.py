@@ -1,10 +1,21 @@
-from zone import Zone
+from zone import Zone, ZoneType
 from connection import Connection
 from drone import Drone
 
 
 class Simulation:
     """A class representing the simulation environment."""
+
+    COLORS = {
+        "red": "\033[91m",
+        "green": "\033[92m",
+        "yellow": "\033[93m",
+        "blue": "\033[94m",
+        "magenta": "\033[95m",
+        "cyan": "\033[96m",
+        "white": "\033[97m",
+        "reset": "\033[0m"
+    }
 
     def __init__(
             self,
@@ -84,7 +95,13 @@ class Simulation:
             True if the destination has space, False otherwise.
         """
         connection = self.get_connection(drone.current_zone, destination)
-        return destination.has_space() and connection.has_space()
+        reserved_space = sum(
+            1 for d in self.drones
+            if d.target_zone == destination and d.turns_remaining > 0
+        )
+        effective_space = destination.max_drones
+        effective_space -= (destination.current_drones + reserved_space)
+        return effective_space > 0 and connection.has_space()
 
     def get_next_zone(self, drone: Drone, path: list[Zone]) -> Zone | None:
         """Get the next zone a drone should move to along its path.
@@ -118,6 +135,39 @@ class Simulation:
             return False
         return True
 
+    def start_restricted_transit(
+            self, drone: Drone,
+            connection: Connection,
+            destination: Zone
+    ) -> None:
+        """Start a drone transiting through a restrected connection.
+
+        Args:
+            drone: The drone to start transiting.
+            connection: The connection the drone is transiting through.
+            destination: The zone the drone is traveling to.
+        """
+        drone.current_zone.remove_drone()
+        drone.current_connection = connection
+        connection.add_drone()
+        drone.target_zone = destination
+        drone.turns_remaining = 1
+
+    def finish_restricted_transit(self, drone: Drone) -> None:
+        """Finish a drone transiting through a restricted connection.
+
+        Args:
+            drone: The drone to finish transiting.
+        """
+        if drone.current_connection is None or drone.target_zone is None:
+            raise ValueError("Drone is not in restricted transit.")
+        drone.turns_remaining -= 1
+        drone.current_connection.remove_drone()
+        drone.current_zone = drone.target_zone
+        drone.target_zone.add_drone()
+        drone.current_connection = None
+        drone.target_zone = None
+
     def move_drone(self, drone: Drone, path: list[Zone]) -> bool:
         """Move a drone to its next zone along the path if possible.
 
@@ -128,12 +178,18 @@ class Simulation:
         Returns:
             True if the drone was moved, False otherwise.
         """
+        if drone.turns_remaining > 0:
+            self.finish_restricted_transit(drone)
+            return True
         if not self.can_drone_move(drone, path):
             return False
         next_zone = self.get_next_zone(drone, path)
         if next_zone is None:
             return False
         connection = self.get_connection(drone.current_zone, next_zone)
+        if next_zone.zone_type == ZoneType.RESTRICTED:
+            self.start_restricted_transit(drone, connection, next_zone)
+            return True
         drone.current_zone.remove_drone()
         connection.add_drone()
         drone.current_zone = next_zone
@@ -146,14 +202,30 @@ class Simulation:
         Args:
             paths: Each drone's route from its current zone to the end zone.
         """
+        occupied_connections = set()
+        for drone in self.drones:
+            if (drone.turns_remaining > 0):
+                occupied_connections.add(drone.current_connection)
         for connection in self.connections:
-            connection.current_drones_in_transit = 0
+            if connection not in occupied_connections:
+                connection.current_drones_in_transit = 0
         turn_moves = []
         for drone in self.get_active_drones():
             path = paths[drone]
             if self.move_drone(drone, path):
-                log = f"D{drone.drone_id}-{drone.current_zone.name}"
-                turn_moves.append(log)
+                if (
+                    drone.turns_remaining > 0 and
+                    drone.current_connection is not None
+                ):
+                    zone1 = drone.current_connection.zone1.name
+                    zone2 = drone.current_connection.zone2.name
+                    log = f"D{drone.drone_id}-{zone1}-{zone2}"
+                else:
+                    log = f"D{drone.drone_id}-{drone.current_zone.name}"
+                color_name = drone.current_zone.color or ""
+                color = Simulation.COLORS.get(color_name, "")
+                reset = Simulation.COLORS["reset"]
+                turn_moves.append(color + log + reset)
         if turn_moves:
             self.turn_log.append(" ".join(turn_moves))
         self.turn_counter += 1

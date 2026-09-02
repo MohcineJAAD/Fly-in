@@ -1,4 +1,5 @@
 from zone import Zone
+from connection import Connection
 
 
 class Drone:
@@ -13,7 +14,8 @@ class Drone:
         """
         self.drone_id = drone_id
         self.current_zone = start_zone
-        self.current_connection = None
+        self.current_connection: Connection | None = None
+        self.target_zone: Zone | None = None
         self.turns_remaining = 0
 
     def has_arrived(self, end_zone: Zone) -> bool:
