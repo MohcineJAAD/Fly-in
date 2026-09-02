@@ -163,15 +163,21 @@ class Pathfinder:
                 candidate_cost += zone_cost
             if candidate_cost <= cost:
                 paths.append(candidate_path)
+        paths.sort(
+            key=lambda path: any(
+                zone.zone_type == ZoneType.PRIORITY for zone in path
+            ),
+            reverse=True
+        )
         return paths
 
 
 if __name__ == "__main__":
     from parser import Parser
     pf = Pathfinder({}, [])
-    p = Parser("map.txt")
+    p = Parser("maps/easy/01_linear_path.txt")
     p.parse()
-    for name in ["start", "waypoint1", "waypoint3", "waypoint2", "goal"]:
+    for name in ["start", "waypoint1", "waypoint2", "goal"]:
         zone = p.zones[name]
         cost = pf.get_zone_cost(zone)
         print(f"{name}: ({zone.zone_type.value}): cost = {cost}")

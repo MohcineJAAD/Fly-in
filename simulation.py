@@ -51,6 +51,28 @@ class Simulation:
             if not drone.has_arrived(self.end_zone)
         ]
 
+    def get_connection(self, zone1: Zone, zone2: Zone) -> Connection:
+        """Get the connection between two zones
+
+        Args:
+            zone1: The first zone.
+            zone2: The second zone.
+
+        Returns:
+            The connection object linking the two zones.
+
+        Raises:
+            ValueError: If no connection exists between the two zones.
+        """
+        for connection in self.connections:
+            if (
+                (connection.zone1 == zone1 and connection.zone2 == zone2)
+                or
+                (connection.zone2 == zone1 and connection.zone1 == zone2)
+            ):
+                return connection
+        raise ValueError("No connection found between the specified zones.")
+
     def can_move(self, drone: Drone, destination: Zone) -> bool:
         """Check if a drone can move into the destination zone.
 
@@ -61,7 +83,8 @@ class Simulation:
         Returns:
             True if the destination has space, False otherwise.
         """
-        return destination.has_space()
+        connection = self.get_connection(drone.current_zone, destination)
+        return destination.has_space() and connection.has_space()
 
     def get_next_zone(self, drone: Drone, path: list[Zone]) -> Zone | None:
         """Get the next zone a drone should move to along its path.
@@ -110,7 +133,9 @@ class Simulation:
         next_zone = self.get_next_zone(drone, path)
         if next_zone is None:
             return False
+        connection = self.get_connection(drone.current_zone, next_zone)
         drone.current_zone.remove_drone()
+        connection.add_drone()
         drone.current_zone = next_zone
         next_zone.add_drone()
         return True
@@ -121,6 +146,8 @@ class Simulation:
         Args:
             paths: Each drone's route from its current zone to the end zone.
         """
+        for connection in self.connections:
+            connection.current_drones_in_transit = 0
         turn_moves = []
         for drone in self.get_active_drones():
             path = paths[drone]

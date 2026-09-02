@@ -4,7 +4,7 @@ from pathfinder import Pathfinder
 
 
 def main() -> None:
-    parser = Parser("maps/easy/02_simple_fork.txt")
+    parser = Parser("test/fork_test.txt")
     parser.parse()
     if not parser.start_zone or not parser.end_zone:
         raise ValueError("start_zone and end_zone are not defined.")
@@ -23,7 +23,7 @@ def main() -> None:
     )
     paths = {}
     for drone in parser.drones:
-        index = drone.drone_id % len(paths_found)
+        index = (drone.drone_id - 1) % len(paths_found)
         paths[drone] = paths_found[index]
     while not simulation.is_finished():
         simulation.run_turn(paths)
