@@ -213,19 +213,20 @@ class Simulation:
         for drone in self.get_active_drones():
             path = paths[drone]
             if self.move_drone(drone, path):
+                prefix = f"D{drone.drone_id}-"
                 if (
                     drone.turns_remaining > 0 and
                     drone.current_connection is not None
                 ):
                     zone1 = drone.current_connection.zone1.name
                     zone2 = drone.current_connection.zone2.name
-                    log = f"D{drone.drone_id}-{zone1}-{zone2}"
+                    zone_part = f"{zone1}-{zone2}"
                 else:
-                    log = f"D{drone.drone_id}-{drone.current_zone.name}"
+                    zone_part = f"{drone.current_zone.name}"
                 color_name = drone.current_zone.color or ""
                 color = Simulation.COLORS.get(color_name, "")
                 reset = Simulation.COLORS["reset"]
-                turn_moves.append(color + log + reset)
+                turn_moves.append(prefix + color + zone_part + reset)
         if turn_moves:
             self.turn_log.append(" ".join(turn_moves))
         self.turn_counter += 1
