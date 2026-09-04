@@ -139,6 +139,11 @@ class Pathfinder:
             A list of paths, where each path is a list of zones.
         """
         first_path = self.find_path(start_zone, end_zone)
+        if not first_path:
+            raise ValueError(
+                f"No valid path exists between '{start_zone.name}'"
+                f" and '{end_zone.name}'."
+            )
         paths = [first_path]
         cost = 0
         for zone in first_path[1:]:
