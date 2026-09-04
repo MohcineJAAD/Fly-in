@@ -270,7 +270,9 @@ class Parser:
                         elif prefix == "connection":
                             self.parse_connection_line(line)
                         else:
-                            raise ValueError(f"Unrecognized line format: '{line}'.")
+                            raise ValueError(
+                                f"Unrecognized line format: '{line}'."
+                            )
                     except ValueError as e:
                         raise ValueError(f"Line ({line_nbr}): {e}")
         except OSError:
