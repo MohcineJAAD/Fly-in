@@ -124,7 +124,7 @@ class Parser:
         if prefix.strip() == "start_hub":
             if zone_type == ZoneType.BLOCKED:
                 raise ValueError(
-                    f"{name}' cannot be blocked: it is the start zone."
+                    f"'{name}' cannot be blocked: it is the start zone."
                 )
             self.start_zone = zone
             zone.max_drones = self.nb_drones

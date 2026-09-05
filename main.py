@@ -33,6 +33,7 @@ def main() -> None:
             simulation.run_turn(paths)
         for line in simulation.turn_log:
             print(line)
+        print(f"\n\033[32m\033[1mTotal turns: {simulation.turn_counter}\033[0m")
     except Exception as e:
         print(f"\033[31mError: {e}\033[0m")
 
