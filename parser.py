@@ -119,6 +119,8 @@ class Parser:
             )
         zone_type = ZoneType(metadata_dict.get('zone', 'normal'))
         color = metadata_dict.get('color', None)
+        if color == "":
+            raise ValueError("color must not be empty.")
         zone = Zone(name, x, y, zone_type, color, max_drones)
         self.zones[name] = zone
         if prefix.strip() == "start_hub":
